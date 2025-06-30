@@ -14,8 +14,8 @@ This project performs real-time multi-player tracking and re-identification usin
 
 .
 ├── deep-person-reid/            # Cloned repo (OSNet Re-ID)
-├── modules/                     # Modular components (reader, detector, embedder, tracker)
 ├── proj/
+│   ├── modules/                     # Modular components (reader, detector, embedder, tracker)
 │   ├── input/                   # Input videos
 │   └── weights/                # YOLOv8 weights
 │       └── best.pt
