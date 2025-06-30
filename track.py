@@ -5,10 +5,14 @@ from ultralytics import YOLO
 from scipy.optimize import linear_sum_assignment
 from collections import deque
 import torch.nn.functional as F
+from torchvision import models, transforms
+import torch.nn as nn
+from torchreid.utils import FeatureExtractor
+
 
 # -------------------- CONFIG --------------------
 MAX_HISTORY = 10
-SIM_THRESHOLD = 0.65
+SIM_THRESHOLD = 0.60
 DIST_THRESHOLD = 80  # in pixels
 EMBEDDING_DIM = 512  # Simulated embedding dimension (match CNN output size later)
 model_path = './proj/weights/best.pt'
@@ -21,6 +25,26 @@ cap = cv2.VideoCapture(video_path)
 
 known_players = {}  # {player_id: {'embeddings': deque, 'centroid': (x, y)}}
 next_id = 0
+
+extractor = FeatureExtractor(
+    model_name='osnet_x0_25',
+    model_path='./proj/osnet/osnet_x0_25_market1501.pth',
+    device=str(device)
+)
+
+# Load pretrained ResNet
+cnn = models.resnet18(pretrained=True)
+cnn.fc = nn.Identity()  # remove final classification layer
+cnn.eval().to(device)
+
+# Image pre-processing for ResNet
+transform = transforms.Compose([
+    transforms.ToPILImage(),
+    transforms.Resize((128, 64)),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406],
+                         [0.229, 0.224, 0.225])
+])
 
 
 # -------------------- FUNCTIONS --------------------
@@ -94,13 +118,20 @@ while True:
             continue
 
         x1, y1, x2, y2 = map(int, box.xyxy[0])
+        h, w, _ = frame.shape
+        x1, y1 = max(0, x1), max(0, y1)
+        x2, y2 = min(w, x2), min(h, y2)
         crop = frame[y1:y2, x1:x2]
+
         if crop.size == 0:
             continue
 
-        # Create dummy embedding using average color (replace with CNN later)
-        crop_tensor = torch.tensor(crop).float().mean(dim=(0, 1)) / 255.0
-        embedding = crop_tensor.repeat(EMBEDDING_DIM // 3)[:EMBEDDING_DIM]
+        crop_rgb = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
+        with torch.no_grad():
+            emb = extractor(crop_rgb).squeeze(0).cpu()
+        embedding = F.normalize(emb, dim=0)
+
+
         embeddings.append(embedding)
         centroids.append(((x1 + x2) // 2, (y1 + y2) // 2))
         detections.append({'box': (x1, y1, x2, y2)})
@@ -114,7 +145,6 @@ while True:
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(frame, f'ID {pid}', (x1, y1 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
     cv2.imshow('Hungarian-Centroid Tracking', frame)
     if cv2.waitKey(25) & 0xFF == ord('q'):
         break
