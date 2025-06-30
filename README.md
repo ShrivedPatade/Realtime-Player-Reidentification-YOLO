@@ -1,8 +1,3 @@
-Sure! Here's the full `README.md` in plain copy-pastable format:
-
----
-
-```markdown
 # ⚽ Real-Time Player Re-Identification with YOLOv8 + OSNet
 
 This project performs real-time multi-player tracking and re-identification using:
