@@ -112,9 +112,3 @@ pip install -r requirements.txt
 * **YOLOv8** by [Ultralytics](https://github.com/ultralytics/ultralytics)
 * **OSNet / deep-person-reid** by [Kaiyang Zhou](https://github.com/KaiyangZhou/deep-person-reid)
 
-```
-
----
-
-Let me know if you'd like this version exported to a file (`README.md`) or styled for GitHub Pages.
-```
