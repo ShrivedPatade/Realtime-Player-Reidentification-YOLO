@@ -17,6 +17,7 @@ cap = cv2.VideoCapture(VIDEO_PATH)
 fps = cap.get(cv2.CAP_PROP_FPS) or FPS_FALLBACK
 frame_delay = int(1000 / fps)
 
+# ---------------- MODULES INIT --------------------
 reader = FrameReader(cap)
 detector = Detector(MODEL_PATH)
 embedder = Embedder(OSNET_PATH)
@@ -24,9 +25,8 @@ tracker = PlayerTracker()
 
 reader.start()
 
-
-
-
+# -------------------- MAIN LOOP --------------------
+print("Starting tracking...")
 while True:
     start = time.time()
     frame = reader.get_frame()
