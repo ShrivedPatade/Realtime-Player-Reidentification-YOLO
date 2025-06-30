@@ -5,6 +5,8 @@ import cv2
 import numpy as np
 from torchreid.utils import FeatureExtractor
 
+# Embedder class for extracting player embeddings from video frames
+# This class uses a pre-trained OSNet model to extract features from player crops
 class Embedder:
     def __init__(self, osnet_path):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -14,6 +16,8 @@ class Embedder:
             device=str(device)
         )
 
+    # Extract embeddings from the given frame and detections
+    # Returns a list of embeddings, centroids, and valid detections
     def get_embeddings(self, frame, detections):
         embeddings = []
         centroids = []

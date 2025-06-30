@@ -5,6 +5,8 @@ from collections import deque
 from scipy.optimize import linear_sum_assignment
 import torch.nn.functional as F
 
+# PlayerTracker class for tracking players across frames
+# This class maintains a list of known players and assigns IDs to new detections
 class PlayerTracker:
     def __init__(self, max_history=10, sim_threshold=0.6, dist_threshold=80):
         self.known_players = {}
@@ -13,12 +15,16 @@ class PlayerTracker:
         self.sim_threshold = sim_threshold
         self.dist_threshold = dist_threshold
 
+    # Calculate cosine distance between two embeddings
     def cosine_distance(self, a, b):
         return 1 - F.cosine_similarity(a.unsqueeze(0), b.unsqueeze(0)).item()
 
+    # Calculate Euclidean distance between two centroids
     def euclidean_distance(self, c1, c2):
         return np.linalg.norm(np.array(c1) - np.array(c2))
 
+    # Build a cost matrix for the Hungarian algorithm
+    # This matrix contains the costs of matching each detection to each known player
     def build_cost_matrix(self, embeddings, centroids):
         costs = []
         for det_emb, det_cent in zip(embeddings, centroids):
@@ -33,6 +39,10 @@ class PlayerTracker:
             costs.append(row)
         return np.array(costs)
 
+    # Assign IDs to new detections based on their embeddings and centroids
+    # Uses the Hungarian algorithm to minimize the assignment cost
+    # If a detection does not match any known player, it is assigned a new ID
+    # If a known player is not matched, their history is updated with the new detection
     def assign_ids(self, detections, embeddings, centroids):
         if not self.known_players:
             for i in range(len(detections)):
